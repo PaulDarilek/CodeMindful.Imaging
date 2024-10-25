@@ -21,7 +21,7 @@ public abstract class TiffBase
         TiffMerger = tiffMerger;
     }
 
-    protected void TestEachFile(Func<FileInfo, bool> test, string searchPattern, string? excludeContains)
+    protected int TestEachFile(Func<FileInfo, bool> test, string searchPattern, string? excludeContains)
     {
         ArgumentNullException.ThrowIfNull(test, nameof(test));
         ArgumentNullException.ThrowIfNullOrEmpty(searchPattern, nameof(searchPattern));
@@ -34,6 +34,7 @@ public abstract class TiffBase
             (file) => file.Exists : 
             (file) => file.Exists && !file.Name.Contains(excludeContains, StringComparison.CurrentCultureIgnoreCase);
 
+        int count = 0;
 
         foreach (FileInfo file in files)
         {
@@ -41,14 +42,17 @@ public abstract class TiffBase
             {
                 if (filter(file))
                 {
+                    count++;
                     bool passed = test.Invoke(file);
                     if (!passed)
                     {
-                        errors.Add(file.FullName + " failed the test");  
+                        errors.Add(file.FullName + " failed the test");
                     }
-
                 }
-
+                else
+                {
+                    Debug.WriteLine("Skip " + file.Name);
+                }
             }
             catch (NotImplementedException ex)
             {
@@ -64,6 +68,11 @@ public abstract class TiffBase
             var errmsg = string.Join(Environment.NewLine, errors);
             Assert.Fail(errmsg);
         }
+        if(count == 0)
+        {
+            Assert.Inconclusive($"No Files were found for pattern: '{searchPattern}' excluding '{excludeContains}'");
+        }
+        return count;
     }
 
 

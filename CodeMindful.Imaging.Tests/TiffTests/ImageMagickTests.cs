@@ -1,16 +1,16 @@
-﻿using CodeMindful.Imaging.Tiff.ImageSharp;
-using SixLabors.ImageSharp;
+﻿using CodeMindful.Imaging.Tiff.Magick;
+using ImageMagick;
 using System.Diagnostics;
 
 namespace CodeMindful.Imaging.Tests.TiffTests;
 
-public class ImageSharpTests : TiffBase
+public class ImageMagickTests :TiffBase
 {
     /// <summary>Files names wint Img# have something not supported by ImageSharp library</summary>
-    private const string FileExclude = "Img#";
+    private const string FileExclude = "Magic";
     private const string FileSpecTiffFails = $"*{FileExclude}{FileSpecTiff}";
 
-    public ImageSharpTests() : base(new TiffSplitterIS(), new TiffMergerIS())
+    public ImageMagickTests() : base(new TiffSplitter(), new TiffMerger())
     {
     }
 
@@ -18,7 +18,8 @@ public class ImageSharpTests : TiffBase
     [Test]
     public void TiffSplitter_TiffSplit()
     {
-        TestEachFile(Test, FileSpecTiffMultiPage, FileExclude);
+        int count = TestEachFile(Test, FileSpecTiffMultiPage, FileExclude);
+        Assert.Pass($"Files Processed: {count}");
 
         bool Test(FileInfo file)
         {
@@ -35,8 +36,8 @@ public class ImageSharpTests : TiffBase
                     var fullPath = WriteFile(outFile, split[i]);
 
                     // expect the split file to be able to load successfully and is a single page.
-                    using var image = Image.Load(fullPath);
-                    Assert.That(image.Frames, Has.Count.EqualTo(1));
+                    using var images = new MagickImageCollection(fullPath);
+                    Assert.That(images.Count, Is.EqualTo(1));
                 }
             }
             return split.Count > 1;
@@ -48,7 +49,8 @@ public class ImageSharpTests : TiffBase
     [Test]
     public void TiffMerger_TiffMerge()
     {
-        TestEachFile(Test, FileSpecTiffMultiPage, FileExclude);
+        int count = TestEachFile(Test, FileSpecTiffMultiPage, FileExclude);
+        Assert.Pass($"Files Processed: {count}");
 
         bool Test(FileInfo file)
         {
@@ -67,8 +69,8 @@ public class ImageSharpTests : TiffBase
                 var fullPath = WriteFile(outFile, mergedBytes);
 
                 // expect the merged file page count equals the split page count.
-                using var image = Image.Load(fullPath);
-                Assert.That(image.Frames, Has.Count.EqualTo(split.Count));
+                using var images = new MagickImageCollection(fullPath);
+                Assert.That(images.Count, Is.EqualTo(split.Count));
             }
 
             return true;
@@ -79,13 +81,19 @@ public class ImageSharpTests : TiffBase
     [Test]
     public void ImageLoad_IsSuccessful_FileTests()
     {
-        TestEachFile(Test, FileSpecTiff, FileExclude);
+        int count = TestEachFile(Test, FileSpecTiff, FileExclude);
+        Assert.Pass($"Files Processed: {count}");
 
         static bool Test(FileInfo file)
         {
-            using var image = Image.Load(file.FullName);
-            Assert.That(image, Is.Not.Null);
-            Assert.That(image.Frames, Has.Count.AtLeast(1));
+            using var images = new MagickImageCollection(file.FullName);
+            Assert.That(images, Is.Not.Null);
+            Assert.That(images.All(img => img.Format == MagickFormat.Tiff || img.Format == MagickFormat.Tif));
+            foreach (var image in images)
+            {
+                Debug.WriteLine($"{file.Name}: {image.Compression} {image.Comment}");
+            }
+            Assert.That(images, Has.Count.AtLeast(1));
             return true;
         }
     }
@@ -94,48 +102,27 @@ public class ImageSharpTests : TiffBase
     [Test]
     public void ImageLoad_ThrowsException_FileTests()
     {
-
-        TestEachFile(Test, FileSpecTiffFails, null);
+        int count = TestEachFile(Test, FileSpecTiffFails, null);
+        Assert.Pass($"Files Processed: {count}");
 
         static bool Test(FileInfo file)
         {
             try
             {
-                var image = Image.Load(file.FullName);
+                using var images = new MagickImageCollection(file.FullName);
+                Assert.That(images, Is.Not.Null);
+                Assert.That(images, Has.Count.AtLeast(1));
                 Trace.WriteLine($"{file.Name}: Loaded correctly... consider renaming.");
                 throw new InvalidDataException("Expected file to throw NotSupportedException or ImageFormatException (consider renaming file)");
             }
-            catch (NotSupportedException ex)
+            catch (MagickCoderErrorException ex)
             {
-                switch (ex.Message)
-                {
-                    case "Only 8 bits per channel is supported for CMYK images.":
-                    case "Invalid color type: Cmyk":
-                    case "The specified TIFF compression format 'ThunderScan' is not supported":
-                    case "Missing SOI marker offset for tiff with old jpeg compression":
-                    case "Images with different sizes are not supported":
-                    case "ImageSharp only supports the UnsignedInteger and Float SampleFormat.":
-                        Debug.WriteLine($"{file.Name}: {ex.Message}");
-                        return true;
-                    default:
-                        throw;
-                }
-
+                Debug.WriteLine($"Error {file.Name}: {ex.Message}");
                 // Expected it to Fail...
-            }
-            catch (ImageFormatException ex)
-            {
-                switch (ex.Message)
-                {
-                    case "Corrupted TIFF LZW: code 256 (table size: 258)":
-                        Debug.WriteLine($"{file.Name}: {ex.Message}");
-                        return true;
-                    default:
-                        throw;
-                }
-
+                return true;
             }
         }
     }
+
 
 }

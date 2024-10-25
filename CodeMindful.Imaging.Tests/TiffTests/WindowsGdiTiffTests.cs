@@ -8,7 +8,7 @@ namespace CodeMindful.Imaging.Tests.TiffTests;
 
 
 [SupportedOSPlatform("windows6.2")]
-public class WindowsTiffTests : TiffBase
+public class WindowsGdiTiffTests : TiffBase
 
 {
     /// <summary>Files with "XWin" in the name don't work with built in Windows TIFF encoders/decoders and Windows GDI.</summary>
@@ -17,7 +17,7 @@ public class WindowsTiffTests : TiffBase
     /// <summary>File Search Pattern expected to get GDI errors</summary>
     private const string FileSpecTiffFails = $"*{FileExclude}{FileSpecTiff}";
 
-    public WindowsTiffTests() : base(new TiffSplitterGDI(), new TiffMergerGDI(logger: null)) { }
+    public WindowsGdiTiffTests() : base(new TiffSplitterGDI(), new TiffMergerGDI(logger: null)) { }
 
     /// <summary>Test will split a multi-page document, and ensure that the output file can load with Image.FromFile()</summary>
     [Test]
