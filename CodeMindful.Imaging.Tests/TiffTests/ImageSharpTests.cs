@@ -18,7 +18,8 @@ public class ImageSharpTests : TiffBase
     [Test]
     public void TiffSplitter_TiffSplit()
     {
-        TestEachFile(Test, FileSpecTiffMultiPage, FileExclude);
+        int count = TestEachFile(Test, FileSpecTiffMultiPage, FileExclude);
+        Assert.Pass($"Files Processed: {count}");
 
         bool Test(FileInfo file)
         {
@@ -48,7 +49,8 @@ public class ImageSharpTests : TiffBase
     [Test]
     public void TiffMerger_TiffMerge()
     {
-        TestEachFile(Test, FileSpecTiffMultiPage, FileExclude);
+        int count = TestEachFile(Test, FileSpecTiffMultiPage, FileExclude);
+        Assert.Pass($"Files Processed: {count}");
 
         bool Test(FileInfo file)
         {
@@ -79,7 +81,8 @@ public class ImageSharpTests : TiffBase
     [Test]
     public void ImageLoad_IsSuccessful_FileTests()
     {
-        TestEachFile(Test, FileSpecTiff, FileExclude);
+        int count = TestEachFile(Test, FileSpecTiff, FileExclude);
+        Assert.Pass($"Files Processed: {count}");
 
         static bool Test(FileInfo file)
         {
@@ -95,9 +98,10 @@ public class ImageSharpTests : TiffBase
     public void ImageLoad_ThrowsException_FileTests()
     {
 
-        TestEachFile(Test, FileSpecTiffFails, null);
+        int count = TestEachFile(Test, FileSpecTiffFails, null);
+        Assert.Pass($"Files Processed: {count}");
 
-        static bool Test(FileInfo file)
+        bool Test(FileInfo file)
         {
             try
             {
@@ -116,6 +120,7 @@ public class ImageSharpTests : TiffBase
                     case "Images with different sizes are not supported":
                     case "ImageSharp only supports the UnsignedInteger and Float SampleFormat.":
                         Debug.WriteLine($"{file.Name}: {ex.Message}");
+                        WriteFile(file.Name, File.ReadAllBytes(file.FullName));
                         return true;
                     default:
                         throw;
@@ -129,6 +134,7 @@ public class ImageSharpTests : TiffBase
                 {
                     case "Corrupted TIFF LZW: code 256 (table size: 258)":
                         Debug.WriteLine($"{file.Name}: {ex.Message}");
+                        WriteFile(file.Name, File.ReadAllBytes(file.FullName));
                         return true;
                     default:
                         throw;

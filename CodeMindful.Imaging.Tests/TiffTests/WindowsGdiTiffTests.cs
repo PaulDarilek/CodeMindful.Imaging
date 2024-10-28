@@ -26,7 +26,8 @@ public class WindowsGdiTiffTests : TiffBase
         if (!TiffSplitterGDI.IsSupportedPlatform)
             Assert.Inconclusive("Unsupported Platform");
 
-        TestEachFile(Test, FileSpecTiff, FileExclude);
+        int count = TestEachFile(Test, FileSpecTiff, FileExclude);
+        Assert.Pass($"Files Processed: {count}");
 
         bool Test(FileInfo file)
         {
@@ -58,7 +59,8 @@ public class WindowsGdiTiffTests : TiffBase
         if (!TiffSplitterGDI.IsSupportedPlatform)
             Assert.Inconclusive("Unsupported Platform");
 
-        TestEachFile(Test, FileSpecTiffMultiPage, FileExclude);
+        int count = TestEachFile(Test, FileSpecTiffMultiPage, FileExclude);
+        Assert.Pass($"Files Processed: {count}");
 
         bool Test(FileInfo file)
         {
@@ -91,7 +93,8 @@ public class WindowsGdiTiffTests : TiffBase
         if (!TiffSplitterGDI.IsSupportedPlatform)
             Assert.Inconclusive("Unsupported Platform");
 
-        TestEachFile(Test, FileSpecTiff, FileExclude);
+        int count = TestEachFile(Test, FileSpecTiff, FileExclude);
+        Assert.Pass($"Files Processed: {count}");
 
         static bool Test(FileInfo file)
         {
@@ -110,9 +113,10 @@ public class WindowsGdiTiffTests : TiffBase
         if (!TiffSplitterGDI.IsSupportedPlatform)
             Assert.Inconclusive("Unsupported Platform");
 
-        TestEachFile(Test, FileSpecTiffFails, null);
+        int count = TestEachFile(Test, FileSpecTiffFails, null);
+        Assert.Pass($"Files Processed: {count}");
 
-        static bool Test(FileInfo file)
+        bool Test(FileInfo file)
         {
             try
             {
@@ -128,7 +132,8 @@ public class WindowsGdiTiffTests : TiffBase
                 // Expectation: Files that are marked as not supported by Windows will get an OutOfMemoryException
                 // This was expected... other errors are failures.
                 Debug.WriteLine($"OutOfMemoryException: {file.Name}");
-                
+                WriteFile(file.Name, File.ReadAllBytes(file.FullName));
+
                 return true; // Expected this exception.
             }
         }

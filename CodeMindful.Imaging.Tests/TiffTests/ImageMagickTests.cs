@@ -37,7 +37,7 @@ public class ImageMagickTests :TiffBase
 
                     // expect the split file to be able to load successfully and is a single page.
                     using var images = new MagickImageCollection(fullPath);
-                    Assert.That(images.Count, Is.EqualTo(1));
+                    Assert.That(images, Has.Count.EqualTo(1));
                 }
             }
             return split.Count > 1;
@@ -70,7 +70,7 @@ public class ImageMagickTests :TiffBase
 
                 // expect the merged file page count equals the split page count.
                 using var images = new MagickImageCollection(fullPath);
-                Assert.That(images.Count, Is.EqualTo(split.Count));
+                Assert.That(images, Has.Count.EqualTo(split.Count));
             }
 
             return true;
@@ -105,7 +105,7 @@ public class ImageMagickTests :TiffBase
         int count = TestEachFile(Test, FileSpecTiffFails, null);
         Assert.Pass($"Files Processed: {count}");
 
-        static bool Test(FileInfo file)
+        bool Test(FileInfo file)
         {
             try
             {
@@ -118,6 +118,7 @@ public class ImageMagickTests :TiffBase
             catch (MagickCoderErrorException ex)
             {
                 Debug.WriteLine($"Error {file.Name}: {ex.Message}");
+                WriteFile(file.Name, File.ReadAllBytes(file.FullName));
                 // Expected it to Fail...
                 return true;
             }
